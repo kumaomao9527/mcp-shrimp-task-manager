@@ -1,17 +1,37 @@
-// 全局變量
+// 全局变量
 let tasks = [];
 let selectedTaskId = null;
 let searchTerm = "";
 let sortOption = "date-asc";
-let globalAnalysisResult = null; // 新增：儲存全局分析結果
+let globalAnalysisResult = null; // 新增：储存全局分析结果
 let svg, g, simulation;
-let width, height; // << 新增：將寬高定義為全局變量
-let isGraphInitialized = false; // << 新增：追蹤圖表是否已初始化
-let zoom; // << 新增：保存縮放行為對象
+let width, height; // << 新增：将宽高定义为全局变量
+let isGraphInitialized = false; // << 新增：跟踪图表是否已初始化
+let zoom; // << 新增：保存缩放行为对象
 
-// 新增：i18n 全局變量
-let currentLang = "en"; // 預設語言
-let translations = {}; // 儲存加載的翻譯
+// 新增：i18n 全局变量
+let currentLang = "en"; // 预设语言
+let translations = {}; // 储存加载的翻译
+
+// 新增：数据目录参数
+let dataDir = null; // 从 URL 参数获取的数据目录路径
+let currentRequirement = null; // 当前选择的需求名称
+
+// 获取 URL 参数的辅助函数
+function getUrlParameter(name) {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get(name);
+}
+
+// HTML安全处理函数
+function escapeHTML(unsafe) {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
 
 // DOM元素
 const taskListElement = document.getElementById("task-list");
@@ -28,10 +48,17 @@ const globalAnalysisResultElement = document.getElementById(
   "global-analysis-result"
 ); // 假設 HTML 中有這個元素
 const langSwitcher = document.getElementById("lang-switcher"); // << 新增：獲取切換器元素
+const requirementSwitcher = document.getElementById("requirement-switcher"); // 需求选择器元素
 const resetViewBtn = document.getElementById("reset-view-btn"); // << 新增：獲取重置按鈕元素
+const requirementOverview = document.getElementById("requirement-overview"); // 需求概览元素
+const taskManagerSection = document.getElementById("task-manager-section"); // 任务管理器部分元素
+const backToOverviewBtn = document.getElementById("back-to-overview-btn"); // 返回概览按钮
 
 // 初始化
 document.addEventListener("DOMContentLoaded", () => {
+  // 获取 URL 参数
+  dataDir = getUrlParameter('dataDir');
+
   // fetchTasks(); // 將由 initI18n() 觸發
   initI18n(); // << 新增：初始化 i18n
   updateCurrentTime();
@@ -77,6 +104,27 @@ document.addEventListener("DOMContentLoaded", () => {
     );
   }
 
+  // 新增：需求选择器事件监听
+  if (requirementSwitcher) {
+    requirementSwitcher.addEventListener("change", (e) => {
+      currentRequirement = e.target.value || null;
+      if (currentRequirement) {
+        // 选择了特定需求，切换到任务管理器视图
+        showTaskManagerView(currentRequirement);
+      } else {
+        // 选择了"所有需求"，返回概览视图
+        showRequirementOverview();
+      }
+    });
+  }
+
+  // 新增：返回概览按钮事件监听
+  if (backToOverviewBtn) {
+    backToOverviewBtn.addEventListener("click", () => {
+      showRequirementOverview();
+    });
+  }
+
   // 新增：視窗大小改變時更新尺寸
   window.addEventListener("resize", () => {
     updateDimensions();
@@ -88,29 +136,29 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// 新增：i18n 核心函數
-// 1. 語言檢測 (URL 參數 > navigator.language > 'en')
+// 新增：i18n 核心函数
+// 1. 语言检测 (URL 参数 > navigator.language > 'en')
 function detectLanguage() {
-  // 1. 優先從 URL 參數讀取
+  // 1. 优先从 URL 参数读取
   const urlParams = new URLSearchParams(window.location.search);
   const urlLang = urlParams.get("lang");
-  if (urlLang && ["en", "zh-TW"].includes(urlLang)) {
+  if (urlLang && ["en", "zh-CN"].includes(urlLang)) {
     return urlLang;
   }
 
-  // 2. 檢查瀏覽器語言（移除 localStorage 檢查）
+  // 2. 检查浏览器语言（移除 localStorage 检查）
   const browserLang = navigator.language || navigator.userLanguage;
   if (browserLang) {
-    if (browserLang.toLowerCase().startsWith("zh-tw")) return "zh-TW";
-    if (browserLang.toLowerCase().startsWith("zh")) return "zh-TW"; // 簡體也先 fallback 到繁體
+    if (browserLang.toLowerCase().startsWith("zh-cn")) return "zh-CN";
+    if (browserLang.toLowerCase().startsWith("zh")) return "zh-CN"; // 其他中文也 fallback 到简体
     if (browserLang.toLowerCase().startsWith("en")) return "en";
   }
 
-  // 3. 預設值
+  // 3. 预设值
   return "en";
 }
 
-// 2. 異步加載翻譯文件
+// 2. 异步加载翻译文件
 async function loadTranslations(lang) {
   try {
     const response = await fetch(`/locales/${lang}.json`);
@@ -134,10 +182,10 @@ async function loadTranslations(lang) {
   }
 }
 
-// 3. 翻譯函數
+// 3. 翻译函数
 function translate(key, replacements = {}) {
   let translated = translations[key] || key; // Fallback to key itself
-  // 簡單的佔位符替換（例如 {message}）
+  // 简单的占位符替换（例如 {message}）
   for (const placeholder in replacements) {
     translated = translated.replace(
       `{${placeholder}}`,
@@ -147,47 +195,49 @@ function translate(key, replacements = {}) {
   return translated;
 }
 
-// 4. 應用翻譯到 DOM (處理 textContent, placeholder, title)
+// 4. 应用翻译到 DOM (处理 textContent, placeholder, title)
 function applyTranslations() {
   console.log("Applying translations for:", currentLang);
   document.querySelectorAll("[data-i18n-key]").forEach((el) => {
     const key = el.dataset.i18nKey;
     const translatedText = translate(key);
 
-    // 優先處理特定屬性
+    // 优先处理特定属性
     if (el.hasAttribute("placeholder")) {
       el.placeholder = translatedText;
     } else if (el.hasAttribute("title")) {
       el.title = translatedText;
     } else if (el.tagName === "OPTION") {
       el.textContent = translatedText;
-      // 如果需要，也可以翻譯 value，但通常不需要
+      // 如果需要，也可以翻译 value，但通常不需要
     } else {
-      // 對於大多數元素，設置 textContent
+      // 对于大多数元素，设置 textContent
       el.textContent = translatedText;
     }
   });
-  // 手動更新沒有 data-key 的元素（如果有的話）
-  // 例如，如果 footer 時間格式需要本地化，可以在這裡處理
-  // updateCurrentTime(); // 確保時間格式也可能更新（如果需要）
+  // 手动更新没有 data-key 的元素（如果有的话）
+  // 例如，如果 footer 时间格式需要本地化，可以在这里处理
+  // updateCurrentTime(); // 确保时间格式也可能更新（如果需要）
 }
 
 // 5. 初始化 i18n
 async function initI18n() {
   currentLang = detectLanguage();
   console.log(`Initializing i18n with language: ${currentLang}`);
-  // << 新增：設置切換器的初始值 >>
+  // << 新增：设置切换器的初始值 >>
   if (langSwitcher) {
     langSwitcher.value = currentLang;
   }
   await loadTranslations(currentLang);
   applyTranslations();
-  await fetchTasks();
+  await fetchRequirements(); // 先加载需求列表
+  // 初始显示需求概览
+  showRequirementOverview();
 }
 
-// 新增：語言切換函數
+// 新增：语言切换函数
 function changeLanguage(lang) {
-  if (!lang || !["en", "zh-TW"].includes(lang)) {
+  if (!lang || !["en", "zh-CN"].includes(lang)) {
     console.warn(`Invalid language selected: ${lang}. Defaulting to English.`);
     lang = "en";
   }
@@ -198,14 +248,14 @@ function changeLanguage(lang) {
       console.log("Translations reloaded, applying...");
       applyTranslations();
       console.log("Re-rendering components...");
-      // 重新渲染需要翻譯的組件
+      // 重新渲染需要翻译的组件
       renderTasks();
       if (selectedTaskId) {
         const task = tasks.find((t) => t.id === selectedTaskId);
         if (task) {
-          selectTask(selectedTaskId); // 確保傳遞 ID，讓 selectTask 重新查找並渲染
+          selectTask(selectedTaskId); // 确保传递 ID，让 selectTask 重新查找并渲染
         } else {
-          // 如果選中的任務已不存在，清除詳情
+          // 如果选中的任务已不存在，清除详情
           taskDetailsContent.innerHTML = `<p class="placeholder">${translate(
             "task_details_placeholder"
           )}</p>`;
@@ -213,25 +263,25 @@ function changeLanguage(lang) {
           highlightNode(null);
         }
       } else {
-        // 如果沒有任務被選中，確保詳情面板顯示 placeholder
+        // 如果没有任务被选中，确保详情面板显示 placeholder
         taskDetailsContent.innerHTML = `<p class="placeholder">${translate(
           "task_details_placeholder"
         )}</p>`;
       }
-      renderDependencyGraph(); // 重新渲染圖表（可能包含 placeholder）
-      updateProgressIndicator(); // 重新渲染進度條（包含標籤）
-      renderGlobalAnalysisResult(); // 重新渲染全局分析（標題）
-      // 確保下拉菜單的值與當前語言一致
+      renderDependencyGraph(); // 重新渲染图表（可能包含 placeholder）
+      updateProgressIndicator(); // 重新渲染进度条（包含标签）
+      renderGlobalAnalysisResult(); // 重新渲染全局分析（标题）
+      // 确保下拉菜单的值与当前语言一致
       if (langSwitcher) langSwitcher.value = currentLang;
       console.log("Language change complete.");
     })
     .catch((error) => {
       console.error("Error changing language:", error);
-      // 可以添加用戶反饋，例如顯示錯誤消息
+      // 可以添加用户反馈，例如显示错误消息
       showTemporaryError("Failed to change language. Please try again."); // Need translation key
     });
 }
-// --- i18n 核心函數結束 ---
+// --- i18n 核心函数结束 ---
 
 // 獲取任務數據
 async function fetchTasks() {
@@ -243,7 +293,20 @@ async function fetchTasks() {
       )}</div>`;
     }
 
-    const response = await fetch("/api/tasks");
+    // 构建 API URL，如果有 dataDir 参数则包含它
+    let apiUrl = "/api/tasks";
+    const params = new URLSearchParams();
+    if (dataDir) {
+      params.append('dataDir', dataDir);
+    }
+    if (currentRequirement) {
+      params.append('requirementName', currentRequirement);
+    }
+    if (params.toString()) {
+      apiUrl += `?${params.toString()}`;
+    }
+
+    const response = await fetch(apiUrl);
 
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
@@ -260,10 +323,10 @@ async function fetchTasks() {
         break; // 找到一個就夠了
       }
     }
-    // 只有當找到的結果與當前儲存的不同時才更新
+    // 只有当找到的结果与当前储存的不同时才更新
     if (foundAnalysisResult !== globalAnalysisResult) {
       globalAnalysisResult = foundAnalysisResult;
-      renderGlobalAnalysisResult(); // 更新顯示
+      renderGlobalAnalysisResult(); // 更新显示
     }
 
     // --- 智慧更新邏輯 (初步 - 仍需改進以避免閃爍) ---
@@ -308,6 +371,193 @@ async function fetchTasks() {
       );
     }
   }
+}
+
+// 获取需求列表
+async function fetchRequirements() {
+  try {
+    if (!dataDir) {
+      console.warn("No dataDir provided, cannot fetch requirements");
+      return;
+    }
+
+    const apiUrl = `/api/requirements?dataDir=${encodeURIComponent(dataDir)}`;
+    const response = await fetch(apiUrl);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const requirements = data.requirements || [];
+
+    // 更新需求选择器
+    updateRequirementSwitcher(requirements);
+
+    // 获取并显示需求统计信息
+    await fetchRequirementStats();
+  } catch (error) {
+    console.error("Error fetching requirements:", error);
+  }
+}
+
+// 获取需求统计信息
+async function fetchRequirementStats() {
+  try {
+    if (!dataDir) {
+      console.warn("No dataDir provided, cannot fetch requirement stats");
+      return;
+    }
+
+    const apiUrl = `/api/requirements/stats?dataDir=${encodeURIComponent(dataDir)}`;
+    const response = await fetch(apiUrl);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const stats = await response.json();
+    displayRequirementStats(stats);
+  } catch (error) {
+    console.error("Error fetching requirement stats:", error);
+  }
+}
+
+// 显示需求统计信息
+function displayRequirementStats(stats) {
+  const statsContainer = document.getElementById("requirement-stats");
+  if (!statsContainer) {
+    // 如果容器不存在，创建一个
+    const container = document.createElement("div");
+    container.id = "requirement-stats";
+    container.className = "requirement-stats";
+
+    // 插入到页面顶部
+    const mainContent = document.querySelector(".container");
+    if (mainContent) {
+      mainContent.insertBefore(container, mainContent.firstChild);
+    }
+  }
+
+  const container = document.getElementById("requirement-stats");
+
+  // 生成统计信息HTML
+  let html = `
+    <div class="stats-header">
+      <h3>${translate("requirement_overview")}</h3>
+      <div class="stats-summary">
+        <span class="stat-item">
+          <strong>${stats.totalRequirements}</strong> ${translate("total_requirements")}
+        </span>
+        <span class="stat-item">
+          <strong>${stats.totalTasks}</strong> ${translate("total_tasks")}
+        </span>
+        <span class="stat-item">
+          <strong>${stats.totalCompleted}</strong> ${translate("completed_tasks")}
+        </span>
+        <span class="stat-item">
+          <strong>${Math.round((stats.totalCompleted / Math.max(stats.totalTasks, 1)) * 100)}%</strong> ${translate("completion_rate")}
+        </span>
+      </div>
+    </div>
+  `;
+
+  if (stats.requirements.length > 0) {
+    html += `
+      <div class="requirements-list">
+        <h4>${translate("requirements_detail")}</h4>
+        <div class="requirements-grid">
+    `;
+
+    stats.requirements.forEach(req => {
+      const completionRate = Math.round((req.completedCount / Math.max(req.taskCount, 1)) * 100);
+      html += `
+        <div class="requirement-card clickable" onclick="showTaskManagerView('${req.name}')">
+          <div class="requirement-name">${req.name}</div>
+          <div class="requirement-stats">
+            <div class="stat-row">
+              <span>${translate("tasks")}: ${req.taskCount}</span>
+              <span>${translate("completed")}: ${req.completedCount}</span>
+            </div>
+            <div class="stat-row">
+              <span>${translate("in_progress")}: ${req.inProgressCount}</span>
+              <span>${translate("pending")}: ${req.pendingCount}</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: ${completionRate}%"></div>
+              <span class="progress-text">${completionRate}%</span>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+
+    html += `
+        </div>
+      </div>
+    `;
+  }
+
+  container.innerHTML = html;
+}
+
+// 更新需求选择器
+function updateRequirementSwitcher(requirements) {
+  if (!requirementSwitcher) return;
+
+  // 清空现有选项（保留"所有需求"选项）
+  requirementSwitcher.innerHTML = `<option value="" data-i18n-key="requirement_all">${translate("requirement_all")}</option>`;
+
+  // 添加需求选项
+  requirements.forEach(requirement => {
+    const option = document.createElement('option');
+    option.value = requirement;
+    option.textContent = requirement;
+    requirementSwitcher.appendChild(option);
+  });
+
+  // 设置当前选择的需求
+  if (currentRequirement) {
+    requirementSwitcher.value = currentRequirement;
+  }
+}
+
+// 显示需求概览视图
+function showRequirementOverview() {
+  currentRequirement = null;
+  if (requirementSwitcher) {
+    requirementSwitcher.value = "";
+  }
+
+  // 显示需求概览，隐藏任务管理器
+  if (requirementOverview) {
+    requirementOverview.style.display = "block";
+  }
+  if (taskManagerSection) {
+    taskManagerSection.style.display = "none";
+  }
+
+  // 获取并显示需求统计信息
+  fetchRequirementStats();
+}
+
+// 显示任务管理器视图
+function showTaskManagerView(requirementName) {
+  currentRequirement = requirementName;
+  if (requirementSwitcher) {
+    requirementSwitcher.value = requirementName;
+  }
+
+  // 隐藏需求概览，显示任务管理器
+  if (requirementOverview) {
+    requirementOverview.style.display = "none";
+  }
+  if (taskManagerSection) {
+    taskManagerSection.style.display = "block";
+  }
+
+  // 获取并显示该需求的任务列表
+  fetchTasks();
 }
 
 // 新增：設置 Server-Sent Events 連接
@@ -470,9 +720,9 @@ function showTemporaryError(message) {
   }, 3000); // 顯示 3 秒
 }
 
-// 渲染任務列表 - *** 需要進一步優化以實現智慧更新 ***
+// 渲染任务列表 - *** 需要进一步优化以实现智能更新 ***
 function renderTasks() {
-  console.log("Rendering tasks..."); // 添加日誌
+  console.log("Rendering tasks..."); // 添加日志
   const filterValue = statusFilter.value;
 
   let filteredTasks = tasks;
@@ -490,7 +740,7 @@ function renderTasks() {
     );
   }
 
-  // 儲存篩選後的任務 ID 集合，用於圖形渲染
+  // 储存筛选后的任务 ID 集合，用于图形渲染
   const filteredTaskIds = new Set(filteredTasks.map(task => task.id));
 
   filteredTasks.sort((a, b) => {
@@ -700,7 +950,7 @@ function selectTask(taskId) {
     
     <div class="task-details-section">
       <h4>${translate("task_detail_implementation_guide_title")}</h4>
-      <pre id="detail-implementation-guide"></pre>
+      <div id="detail-implementation-guide" class="implementation-guide-content"></div>
     </div>
     
     <div class="task-details-section">
@@ -758,10 +1008,11 @@ function selectTask(taskId) {
   if (detailDescription)
     detailDescription.textContent =
       task.description || translate("task_detail_no_description");
-  if (detailImplementationGuide)
-    detailImplementationGuide.textContent =
-      task.implementationGuide ||
-      translate("task_detail_no_implementation_guide");
+  if (detailImplementationGuide) {
+    const guideContent = task.implementationGuide || translate("task_detail_no_implementation_guide");
+    // 先转义HTML，然后替换换行符
+    detailImplementationGuide.innerHTML = escapeHTML(guideContent).replace(/\\n/g, '<br>');
+  }
   if (detailVerificationCriteria)
     detailVerificationCriteria.textContent =
       task.verificationCriteria ||
@@ -1267,24 +1518,24 @@ function updateCurrentTime() {
     currentTimeElement.textContent = timeString;
   }
 }
-// 更新項目進度指示器
+// 更新项目进度指示器
 function updateProgressIndicator() {
   const totalTasks = tasks.length;
   if (totalTasks === 0) {
-    progressIndicator.style.display = "none"; // 沒有任務時隱藏
+    progressIndicator.style.display = "none"; // 没有任务时隐藏
     return;
   }
 
-  progressIndicator.style.display = "block"; // 確保顯示
+  progressIndicator.style.display = "block"; // 确保显示
 
   const completedTasks = tasks.filter(
     (task) => task.status === "completed" || task.status === "已完成"
   ).length;
   const inProgressTasks = tasks.filter(
-    (task) => task.status === "in_progress" || task.status === "進行中"
+    (task) => task.status === "in_progress" || task.status === "进行中"
   ).length;
   const pendingTasks = tasks.filter(
-    (task) => task.status === "pending" || task.status === "待處理"
+    (task) => task.status === "pending" || task.status === "待处理"
   ).length;
 
   const completedPercent =

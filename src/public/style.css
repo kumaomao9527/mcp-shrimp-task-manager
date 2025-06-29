@@ -47,6 +47,12 @@ h1 {
   color: var(--primary-color);
 }
 
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
 .status-bar {
   display: flex;
   align-items: center;
@@ -324,6 +330,68 @@ pre {
   font-size: 0.9rem;
 }
 
+.implementation-guide-content {
+  line-height: 1.6;
+  background-color: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 15px;
+  border-radius: var(--border-radius);
+  margin-top: 10px;
+}
+
+.implementation-guide-content pre {
+  background-color: rgba(0, 0, 0, 0.3);
+  padding: 15px;
+  border-radius: var(--border-radius);
+  overflow-x: auto;
+  margin: 10px 0;
+  font-family: "Consolas", "Monaco", monospace;
+  font-size: 0.9rem;
+}
+
+.implementation-guide-content p {
+  margin: 10px 0;
+}
+
+.implementation-guide-content ul,
+.implementation-guide-content ol {
+  margin: 10px 0;
+  padding-left: 20px;
+}
+
+.implementation-guide-content li {
+  margin: 5px 0;
+}
+
+.implementation-guide-content h1,
+.implementation-guide-content h2,
+.implementation-guide-content h3,
+.implementation-guide-content h4,
+.implementation-guide-content h5,
+.implementation-guide-content h6 {
+  margin: 15px 0 10px 0;
+  color: var(--primary-color);
+}
+
+.implementation-guide-content code {
+  background-color: rgba(0, 0, 0, 0.4);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: "Consolas", "Monaco", monospace;
+  font-size: 0.85rem;
+}
+
+.implementation-guide-content strong,
+.implementation-guide-content b {
+  font-weight: 600;
+  color: var(--accent-color);
+}
+
+.implementation-guide-content em,
+.implementation-guide-content i {
+  font-style: italic;
+}
+
 footer {
   margin-top: 20px;
   text-align: center;
@@ -492,4 +560,193 @@ g.node-item.highlighted circle {
   stroke: rgba(255, 255, 255, 0.1);
   stroke-width: 1;
   pointer-events: none;
+}
+
+/* 需求统计样式 */
+.requirement-stats {
+  background-color: var(--panel-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stats-header h3 {
+  margin: 0 0 15px 0;
+  color: var(--primary-color);
+  font-size: 1.5em;
+}
+
+.stats-summary {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.stat-item {
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 15px;
+  border-radius: var(--border-radius);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  min-width: 120px;
+  text-align: center;
+  flex: 1;
+}
+
+.stat-item strong {
+  display: block;
+  font-size: 1.4em;
+  color: var(--accent-color);
+  margin-bottom: 5px;
+  font-weight: 600;
+}
+
+.requirements-list h4 {
+  margin: 20px 0 15px 0;
+  color: var(--primary-color);
+  font-size: 1.2em;
+}
+
+.requirements-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 15px;
+}
+
+.requirement-card {
+  background-color: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--border-radius);
+  padding: 15px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.requirement-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.requirement-name {
+  font-weight: bold;
+  font-size: 1.1em;
+  color: var(--text-color);
+  margin-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 8px;
+}
+
+.requirement-stats .stat-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+  font-size: 0.9em;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.progress-bar {
+  position: relative;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  height: 20px;
+  margin-top: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.progress-fill {
+  background: linear-gradient(90deg, var(--secondary-color), var(--accent-color));
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.8em;
+  font-weight: bold;
+  color: var(--text-color);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+/* 需求概览样式 */
+.requirement-overview {
+  background-color: var(--panel-color);
+  border-radius: var(--border-radius);
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--box-shadow);
+}
+
+.requirement-card.clickable {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.requirement-card.clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+  background-color: rgba(52, 152, 219, 0.1);
+}
+
+/* 任务管理器部分样式 */
+.task-manager-section {
+  display: none;
+}
+
+/* 任务面板控制区域 */
+.task-panel-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.back-btn {
+  background-color: var(--secondary-color);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.3s ease;
+}
+
+.back-btn:hover {
+  background-color: #27ae60;
+}
+
+.filters {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* 响应式设计更新 */
+@media (max-width: 768px) {
+  .stats-summary {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .stat-item {
+    min-width: auto;
+  }
+
+  .requirements-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .task-panel-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filters {
+    justify-content: center;
+  }
 }

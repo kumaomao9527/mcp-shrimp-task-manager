@@ -1,6 +1,7 @@
 {
   "app_title": "Shrimp Task Manager",
   "status_indicator_online": "ONLINE",
+  "requirement_all": "All Requirements",
   "dependency_view_title": "Dependency View",
   "dependency_graph_placeholder": "Dependency relationship for all tasks",
   "reset_view_btn_title": "Reset View",
@@ -52,5 +53,18 @@
   "error_loading_tasks": "Failed to load tasks: {message}",
   "error_updating_tasks": "Failed to update tasks: {message}",
   "error_loading_graph": "Failed to load dependency graph",
-  "error_task_not_found": "Task not found"
+  "error_task_not_found": "Task not found",
+
+  "requirement_overview": "Requirements Overview",
+  "total_requirements": "Total Requirements",
+  "total_tasks": "Total Tasks",
+  "completed_tasks": "Completed Tasks",
+  "completion_rate": "Completion Rate",
+  "requirements_detail": "Requirements Detail",
+  "tasks": "Tasks",
+  "completed": "Completed",
+  "in_progress": "In Progress",
+  "pending": "Pending",
+  "back_to_overview": "Back to Overview",
+  "loading": "Loading..."
 }

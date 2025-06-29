@@ -39,8 +39,10 @@
     "zod-to-json-schema": "^3.24.5"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.1",
     "@types/node": "^20.8.2",
+    "@types/socket.io": "^3.0.1",
     "@types/uuid": "^9.0.6",
     "copyfiles": "^2.4.1",
     "ts-node": "^10.9.2",

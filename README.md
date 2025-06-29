@@ -1,3 +1,98 @@
+# 变更日志 (CHANGE.MD)
+
+## 项目概述
+MCP Shrimp Task Manager - 基于MCP协议的任务管理工具
+
+## 主要变更记录
+
+### 🔧 工具参数优化
+- **自动项目路径检测**: 所有需要dataDir参数的工具现在使用`cmd cd`命令自动获取项目路径
+- **提示词改进**: 添加"The dataDir parameter required by tools uses cmd to execute cd to obtain the project path"提示，确保AI调用时自动带上项目地址
+- **参数一致性**: 统一了所有工具的dataDir参数设计，确保工具调用的一致性
+
+### 📁 数据存储结构重构
+- **项目隔离**: 在项目根目录创建`.shrimp_task`目录，实现项目级别的数据隔离
+- **需求分层管理**: 支持按需求创建子目录结构，每个需求拥有独立的任务空间
+- **目录结构**:
+  ```
+  .shrimp_task/
+  ├── requirement.json          # 需求列表和统计信息
+  ├── 需求A/
+  │   └── tasks.json           # 需求A的任务列表
+  ├── 需求B/
+  │   └── tasks.json           # 需求B的任务列表
+  └── memory/                  # 记忆文件目录
+      └── *.md
+  ```
+
+**目录结构示意图**:
+![目录结构](1751212765652.png)
+*图: 项目目录结构 - 按需求分层管理的文件组织方式*
+
+### 🎯 任务管理功能增强
+- **层次化任务结构**: 支持父任务和子任务的层次关系，形成清晰的任务归属
+- **需求级别组织**: 任务按需求分组管理，每个需求可包含多个相关任务
+- **requirementName必传**: 所有任务必须在指定需求目录下创建，确保数据组织的规范性
+- **任务状态跟踪**: 支持任务状态的完整生命周期管理
+
+### 🌐 WebGUI界面改进
+- **需求概览页面**: WebGUI.md首先展示所有需求的概览信息
+- **分层导航**: 点击具体需求后进入对应的任务列表(Shrimp Task Manager)
+- **项目级管理**: 针对每个项目单独管理，可查看该项目下所有需求及相关任务
+- **数据展示**: 在WebGUI.md中展示需求列表、任务数、完成数等统计信息
+- **交互优化**: 支持需求选择和任务列表的动态加载
+
+**WebGUI界面展示**:
+![WebGUI界面](1751212625570.jpg)
+*图: WebGUI管理界面 - 项目级需求和任务管理视图*
+
+### 🔍 功能特性
+- **多语言支持**: 优先支持简体中文(zh-CN)本地化
+- **路径处理统一**: 所有工具统一使用`.shrimp_task`子目录进行数据存储
+- **并发安全**: 支持MCP并发调用时的路径隔离，防止路径冲突
+- **自动目录创建**: 当dataDir参数提供时，系统自动创建`.shrimp_task`子目录
+
+### 📋 工具集成
+- **任务创建**: 支持创建需求和子任务
+- **任务分解**: 支持将复杂任务分解为子任务
+- **状态管理**: 支持任务状态的更新和跟踪
+- **数据查询**: 支持按需求查询任务列表
+- **WebGUI生成**: 自动生成项目级别的Web管理界面
+
+### 🛠 技术改进
+- **参数验证**: 增强了工具参数的验证机制
+- **错误处理**: 改进了错误处理和用户反馈
+- **性能优化**: 优化了数据读写和界面渲染性能
+- **代码结构**: 重构了代码结构，提高了可维护性
+
+### 📚 文档更新
+- **README.md**: 保持原有功能文档的完整性
+- **使用指南**: 更新了工具使用指南和最佳实践
+- **API文档**: 完善了工具API的参数说明
+
+## 界面展示
+
+### 📁 目录结构
+![目录结构示意图](1751212765652.png)
+*项目目录结构 - 展示了按需求分层管理的文件组织方式，包括requirement.json、各需求子目录和memory目录*
+
+### 🌐 WebGUI管理界面
+![WebGUI管理界面](1751212625570.jpg)
+*WebGUI管理界面 - 展示了项目级需求概览和任务管理功能，支持需求选择和任务列表查看*
+
+## 兼容性说明
+- 保持向后兼容，现有项目可平滑迁移到新的目录结构
+- 支持从旧版本数据格式自动升级到新格式
+- WebGUI界面保持用户习惯的操作方式
+
+## 未来规划
+- 继续优化用户体验和界面交互
+- 增强任务管理的高级功能
+- 支持更多的项目管理场景
+- 提升系统的稳定性和性能
+
+---
+
 [English](README.md) | [中文](docs/zh/README.md)
 
 ## 目錄
@@ -43,6 +138,7 @@ Shrimp Task Manager guides Agents through structured workflows for systematic pr
 - **Research Mode**: Systematic technical research capabilities with guided workflows for exploring technologies, best practices, and solution comparisons
 - **Project Rules Initialization**: Define project standards and rules to maintain consistency across large projects
 - **<a id="web-gui"></a>Web GUI**: Provides an optional web-based graphical user interface for task management. Enable by setting `ENABLE_GUI=true` in your `.env` file. When enabled, a `WebGUI.md` file containing the access address will be created in your `DATA_DIR`.
+- **Multi-Instance Support**: Supports concurrent execution of multiple MCP instances with isolated data directories and file locking mechanisms to prevent data conflicts.
 
 ## 🧭 <a id="usage-guide"></a>Usage Guide
 
@@ -227,7 +323,6 @@ Shrimp Task Manager offers two configuration methods: global configuration and p
       "command": "node",
       "args": ["/mcp-shrimp-task-manager/dist/index.js"],
       "env": {
-        "DATA_DIR": "/path/to/project/data", // 必須使用絕對路徑
         "TEMPLATES_USE": "en",
         "ENABLE_GUI": "false"
       }
@@ -244,7 +339,6 @@ or
       "command": "npx",
       "args": ["-y", "mcp-shrimp-task-manager"],
       "env": {
-        "DATA_DIR": "/mcp-shrimp-task-manager/data",
         "TEMPLATES_USE": "en",
         "ENABLE_GUI": "false"
       }
@@ -269,7 +363,6 @@ You can also set up dedicated configurations for each project to use independent
       "command": "node",
       "args": ["/path/to/mcp-shrimp-task-manager/dist/index.js"],
       "env": {
-        "DATA_DIR": "/path/to/project/data", // Must use absolute path
         "TEMPLATES_USE": "en",
         "ENABLE_GUI": "false"
       }
@@ -297,14 +390,14 @@ or
 
 ### ⚠️ Important Configuration Notes
 
-The **DATA_DIR parameter** is the directory where Shrimp Task Manager stores task data, conversation logs, and other information. Setting this parameter correctly is crucial for the normal operation of the system. This parameter must use an **absolute path**; using a relative path may cause the system to incorrectly locate the data directory, resulting in data loss or function failure.
+**重要变更**: `DATA_DIR` 环境变量已被移除。现在所有工具都必须通过 `dataDir` 参数明确指定数据目录，这确保了更好的项目隔离和数据安全性。
 
-> **Warning**: Using relative paths may cause the following issues:
+> **注意**:
 >
-> - Data files not found, causing system initialization failure
-> - Task status loss or inability to save correctly
-> - Inconsistent application behavior across different environments
-> - System crashes or failure to start
+> - 所有工具调用时都必须提供 `dataDir` 参数
+> - 数据将存储在 `dataDir/.shrimp_task/` 目录中
+> - 不同项目使用完全独立的数据目录
+> - 提高了系统的可预测性和安全性
 
 ### 🔧 Environment Variable Configuration
 
@@ -317,7 +410,6 @@ Shrimp Task Manager supports customizing prompt behavior through environment var
       "command": "node",
       "args": ["/path/to/mcp-shrimp-task-manager/dist/index.js"],
       "env": {
-        "DATA_DIR": "/path/to/project/data",
         "MCP_PROMPT_PLAN_TASK": "Custom planning guidance...",
         "MCP_PROMPT_EXECUTE_TASK_APPEND": "Additional execution instructions...",
         "TEMPLATES_USE": "en",
@@ -335,8 +427,7 @@ There are two customization methods:
 
 Additionally, there are other system configuration variables:
 
-- **DATA_DIR**: Specifies the directory where task data is stored
-- **TEMPLATES_USE**: Specifies the template set to use for prompts. Defaults to `en`. Currently available options are `en` and `zh`. To use custom templates, copy the `src/prompts/templates_en` directory to the location specified by `DATA_DIR`, rename the copied directory (e.g., to `my_templates`), and set `TEMPLATES_USE` to the new directory name (e.g., `my_templates`).
+- **TEMPLATES_USE**: Specifies the template set to use for prompts. Defaults to `en`. Currently available options are `en` and `zh`. 如需自定义模板，请直接修改内置模板文件。
 
 For detailed instructions on customizing prompts, including supported parameters and examples, see the [Prompt Customization Guide](docs/en/prompt-customization.md).
 
@@ -379,6 +470,17 @@ If your tool doesn't support Custom modes, you can:
 ## 🛠️ <a id="tools"></a>Available Tools Overview
 
 After configuration, you can use the following tools:
+
+### Multi-Instance Support
+
+All data-access tools now require a mandatory `dataDir` parameter for multi-instance deployment:
+
+- **Purpose**: Allows multiple MCP instances to run concurrently with isolated data directories
+- **Usage**: Must provide `"dataDir": "/path/to/your/data"` in all tool calls
+- **Requirement**: `dataDir` parameter is now mandatory for all tools
+- **Concurrency**: File locking mechanisms prevent data conflicts during concurrent access
+
+For detailed information, see [Tool Parameter Design Guide](docs/zh/tool-parameter-design.md).
 
 | Category                     | Tool Name            | Description                                      |
 | ---------------------------- | -------------------- | ------------------------------------------------ |

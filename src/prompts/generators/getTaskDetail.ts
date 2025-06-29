@@ -3,11 +3,7 @@
  * 負責將模板和參數組合成最終的 prompt
  */
 
-import {
-  loadPrompt,
-  generatePrompt,
-  loadPromptFromTemplate,
-} from "../loader.js";
+import { loadPrompt, generatePrompt, loadPromptFromTemplate } from "../loader.js";
 import { Task } from "../../types/index.js";
 
 /**
@@ -24,9 +20,7 @@ export interface GetTaskDetailPromptParams {
  * @param params prompt 參數
  * @returns 生成的 prompt
  */
-export function getGetTaskDetailPrompt(
-  params: GetTaskDetailPromptParams
-): string {
+export function getGetTaskDetailPrompt(params: GetTaskDetailPromptParams): string {
   const { taskId, task, error } = params;
 
   // 如果有錯誤，顯示錯誤訊息
@@ -39,9 +33,7 @@ export function getGetTaskDetailPrompt(
 
   // 如果找不到任務，顯示找不到任務的訊息
   if (!task) {
-    const notFoundTemplate = loadPromptFromTemplate(
-      "getTaskDetail/notFound.md"
-    );
+    const notFoundTemplate = loadPromptFromTemplate("getTaskDetail/notFound.md");
     return generatePrompt(notFoundTemplate, {
       taskId,
     });
@@ -57,21 +49,15 @@ export function getGetTaskDetailPrompt(
 
   let dependenciesPrompt = "";
   if (task.dependencies && task.dependencies.length > 0) {
-    const dependenciesTemplate = loadPromptFromTemplate(
-      "getTaskDetail/dependencies.md"
-    );
+    const dependenciesTemplate = loadPromptFromTemplate("getTaskDetail/dependencies.md");
     dependenciesPrompt = generatePrompt(dependenciesTemplate, {
-      dependencies: task.dependencies
-        .map((dep) => `\`${dep.taskId}\``)
-        .join(", "),
+      dependencies: task.dependencies.map((dep) => `\`${dep.taskId}\``).join(", "),
     });
   }
 
   let implementationGuidePrompt = "";
   if (task.implementationGuide) {
-    const implementationGuideTemplate = loadPromptFromTemplate(
-      "getTaskDetail/implementationGuide.md"
-    );
+    const implementationGuideTemplate = loadPromptFromTemplate("getTaskDetail/implementationGuide.md");
     implementationGuidePrompt = generatePrompt(implementationGuideTemplate, {
       implementationGuide: task.implementationGuide,
     });
@@ -79,9 +65,7 @@ export function getGetTaskDetailPrompt(
 
   let verificationCriteriaPrompt = "";
   if (task.verificationCriteria) {
-    const verificationCriteriaTemplate = loadPromptFromTemplate(
-      "getTaskDetail/verificationCriteria.md"
-    );
+    const verificationCriteriaTemplate = loadPromptFromTemplate("getTaskDetail/verificationCriteria.md");
     verificationCriteriaPrompt = generatePrompt(verificationCriteriaTemplate, {
       verificationCriteria: task.verificationCriteria,
     });
@@ -89,28 +73,17 @@ export function getGetTaskDetailPrompt(
 
   let relatedFilesPrompt = "";
   if (task.relatedFiles && task.relatedFiles.length > 0) {
-    const relatedFilesTemplate = loadPromptFromTemplate(
-      "getTaskDetail/relatedFiles.md"
-    );
+    const relatedFilesTemplate = loadPromptFromTemplate("getTaskDetail/relatedFiles.md");
     relatedFilesPrompt = generatePrompt(relatedFilesTemplate, {
-      files: task.relatedFiles
-        .map(
-          (file) =>
-            `- \`${file.path}\` (${file.type})${
-              file.description ? `: ${file.description}` : ""
-            }`
-        )
-        .join("\n"),
+      files: task.relatedFiles.map((file) => `- \`${file.path}\` (${file.type})${file.description ? `: ${file.description}` : ""}`).join("\n"),
     });
   }
 
   let complatedSummaryPrompt = "";
   if (task.completedAt) {
-    const complatedSummaryTemplate = loadPromptFromTemplate(
-      "getTaskDetail/complatedSummary.md"
-    );
+    const complatedSummaryTemplate = loadPromptFromTemplate("getTaskDetail/complatedSummary.md");
     complatedSummaryPrompt = generatePrompt(complatedSummaryTemplate, {
-      completedTime: new Date(task.completedAt).toLocaleString("zh-TW"),
+      completedTime: new Date(task.completedAt).toLocaleString("zh-CN"),
       summary: task.summary || "*無完成摘要*",
     });
   }
@@ -128,8 +101,8 @@ export function getGetTaskDetailPrompt(
     implementationGuideTemplate: implementationGuidePrompt,
     verificationCriteriaTemplate: verificationCriteriaPrompt,
     relatedFilesTemplate: relatedFilesPrompt,
-    createdTime: new Date(task.createdAt).toLocaleString("zh-TW"),
-    updatedTime: new Date(task.updatedAt).toLocaleString("zh-TW"),
+    createdTime: new Date(task.createdAt).toLocaleString("zh-CN"),
+    updatedTime: new Date(task.updatedAt).toLocaleString("zh-CN"),
     complatedSummaryTemplate: complatedSummaryPrompt,
   });
 

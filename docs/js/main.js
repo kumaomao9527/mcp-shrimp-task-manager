@@ -1,46 +1,46 @@
 /**
- * MCP Shrimp Task Manager 網站主腳本
+ * MCP Shrimp Task Manager 网站主脚本
  */
 
-// 頁面加載完成後執行
+// 页面加载完成后执行
 document.addEventListener("DOMContentLoaded", function () {
-  // 初始化滾動動畫
+  // 初始化滚动动画
   initAOS();
 
-  // 初始化移動端菜單
+  // 初始化移动端菜单
   initMobileMenu();
 
-  // 初始化代碼高亮和複製功能
+  // 初始化代码高亮和复制功能
   initCodeBlocks();
 
-  // 平滑滾動功能
+  // 平滑滚动功能
   initSmoothScroll();
 
-  // 英雄區特效
+  // 英雄区特效
   initHeroEffects();
 
-  // 痛點與解決方案區特效
+  // 痛点与解决方案区特效
   initPainPointsEffects();
 
-  // 核心功能展示區特效
+  // 核心功能展示区特效
   initFeaturesEffects();
 
-  // 工作流程展示區特效
+  // 工作流程展示区特效
   initWorkflowEffects();
 
-  // 初始化安裝與配置區功能
+  // 初始化安装与配置区功能
   initInstallationSection();
 
-  // 檢測頁面滾動位置以顯示回到頂部按鈕
+  // 检测页面滚动位置以显示回到顶部按钮
   initScrollToTopButton();
 
-  // 初始化響應式圖片懶加載
+  // 初始化响应式图片懒加载
   initLazyLoading();
 
-  // 初始化頁面進入動畫
+  // 初始化页面进入动画
   initPageEntranceAnimation();
 
-  // 多語系功能
+  // 多语系功能
   initMultiLanguage();
 });
 
@@ -731,7 +731,7 @@ function initWorkflowModal() {
         `,
       },
     },
-    "zh-TW": {
+    "zh-CN": {
       1: {
         title: "任務規劃",
         content: `
@@ -1270,70 +1270,70 @@ function isInViewport(element) {
 }
 
 /**
- * 初始化多語系功能
+ * 初始化多语系功能
  */
 function initMultiLanguage() {
-  // 檢查 i18n.js 是否已載入
+  // 检查 i18n.js 是否已加载
   if (typeof i18n !== "undefined") {
-    // 優先使用增強版初始化函數
+    // 优先使用增强版初始化函数
     if (typeof enhancedInitializeLanguage === "function") {
       enhancedInitializeLanguage();
     } else if (typeof initializeLanguage === "function") {
-      // 兼容性處理，如果增強版函數不存在則使用原始方法
+      // 兼容性处理，如果增强版函数不存在则使用原始方法
       initializeLanguage();
     } else {
-      console.warn("多語系初始化函數不可用，將使用基本初始化");
-      // 基本初始化 - 在i18n.js無法正確載入時提供基本功能
+      console.warn("多语系初始化函数不可用，将使用基本初始化");
+      // 基本初始化 - 在i18n.js无法正确加载时提供基本功能
       try {
         const currentLang =
           localStorage.getItem("preferred-language") ||
           (navigator.language && navigator.language.startsWith("zh")
-            ? "zh-TW"
+            ? "zh-CN"
             : "en");
         document.documentElement.setAttribute("lang", currentLang);
       } catch (e) {
-        console.error("基本語言初始化失敗:", e);
+        console.error("基本语言初始化失败:", e);
       }
     }
 
-    // 為語言切換添加自定義事件
+    // 为语言切换添加自定义事件
     try {
       document.querySelectorAll(".lang-btn").forEach(function (btn) {
         btn.addEventListener("click", function () {
           const lang = this.getAttribute("data-lang");
 
-          // 優先使用增強版語言切換函數
+          // 优先使用增强版语言切换函数
           if (typeof enhancedSetLanguage === "function") {
             enhancedSetLanguage(lang);
           } else if (typeof setLanguageWithAnimation === "function") {
-            // 次優先使用帶動畫效果的語言切換
+            // 次优先使用带动画效果的语言切换
             setLanguageWithAnimation(lang);
           } else if (typeof setLanguage === "function") {
-            // 兼容性處理，使用基本語言切換函數
+            // 兼容性处理，使用基本语言切换函数
             setLanguage(lang);
           } else {
-            console.warn("語言切換函數不可用");
-            // 最基本處理 - 更新 HTML lang 屬性並保存偏好
+            console.warn("语言切换函数不可用");
+            // 最基本处理 - 更新 HTML lang 属性并保存偏好
             try {
               localStorage.setItem("preferred-language", lang);
               document.documentElement.setAttribute("lang", lang);
             } catch (e) {
-              console.error("基本語言切換失敗:", e);
+              console.error("基本语言切换失败:", e);
             }
           }
         });
       });
     } catch (e) {
-      console.error("為語言按鈕添加事件監聽器時出錯:", e);
+      console.error("为语言按钮添加事件监听器时出错:", e);
     }
 
-    // 初始化時執行批量翻譯，優化性能
+    // 初始化时执行批量翻译，优化性能
     if (typeof batchApplyTranslations === "function") {
       batchApplyTranslations();
     }
   } else {
-    console.warn("i18n.js 尚未載入，無法啟用完整多語系功能");
-    // 嘗試提供基本的多語系支持
+    console.warn("i18n.js 尚未加载，无法启用完整多语系功能");
+    // 尝试提供基本的多语系支持
     try {
       const basicLanguageSupport = function () {
         const langBtns = document.querySelectorAll(".lang-btn");
@@ -1346,7 +1346,7 @@ function initMultiLanguage() {
               localStorage.setItem("preferred-language", lang);
               document.documentElement.setAttribute("lang", lang);
 
-              // 更新按鈕狀態
+              // 更新按钮状态
               langBtns.forEach((b) => {
                 if (b.getAttribute("data-lang") === lang) {
                   b.classList.add("active");
@@ -1355,7 +1355,7 @@ function initMultiLanguage() {
                 }
               });
             } catch (e) {
-              console.error("基本語言切換失敗:", e);
+              console.error("基本语言切换失败:", e);
             }
           });
         });
@@ -1365,7 +1365,7 @@ function initMultiLanguage() {
           const savedLang =
             localStorage.getItem("preferred-language") ||
             (navigator.language && navigator.language.startsWith("zh")
-              ? "zh-TW"
+              ? "zh-CN"
               : "en");
 
           langBtns.forEach((btn) => {
@@ -1394,9 +1394,9 @@ function initMultiLanguage() {
       const lang = event.detail.language;
       console.log("Language changed to:", lang);
 
-      // 使用 translateText 函數更新特殊元素
+      // 使用 translateText 函数更新特殊元素
       const updateSpecialElements = function () {
-        // 安全地取得翻譯函數
+        // 安全地取得翻译函数
         const getTranslation = (key, defaultText) => {
           if (typeof safeTranslate === "function") {
             return safeTranslate(key, defaultText);
@@ -1408,24 +1408,24 @@ function initMultiLanguage() {
         };
 
         try {
-          // 更新複製按鈕文字
+          // 更新复制按钮文字
           const copyBtns = document.querySelectorAll(".copy-cmd-btn");
           const copyText = getTranslation("common.copy", {
             en: "Copy",
-            zh: "複製",
+            zh: "复制",
           });
 
           copyBtns.forEach((btn) => {
-            // 只更新沒有顯示"已複製"的按鈕
+            // 只更新没有显示"已复制"的按钮
             if (
               btn.textContent !== "Copied!" &&
-              btn.textContent !== "已複製!"
+              btn.textContent !== "已复制!"
             ) {
               btn.textContent = copyText;
             }
           });
         } catch (e) {
-          console.warn("更新複製按鈕文字失敗:", e);
+          console.warn("更新复制按钮文字失败:", e);
         }
 
         try {
@@ -1459,7 +1459,7 @@ function initMultiLanguage() {
 
 /**
  * 根據當前語言更新工作流程模態窗口內容
- * @param {string} lang - 當前語言代碼 ("en" 或 "zh-TW")
+ * @param {string} lang - 當前語言代碼 ("en" 或 "zh-CN")
  */
 function updateWorkflowModalContent(lang) {
   const modal = document.getElementById("workflow-detail-modal");
@@ -1473,7 +1473,7 @@ function updateWorkflowModalContent(lang) {
   if (currentStep && modalTitle && modalContent) {
     // 從工作流程詳情中獲取對應語言的內容
     const workflowDetails = getWorkflowDetails();
-    const langKey = lang === "en" ? "en" : "zh-TW";
+    const langKey = lang === "en" ? "en" : "zh-CN";
 
     if (workflowDetails[langKey] && workflowDetails[langKey][currentStep]) {
       const stepData = workflowDetails[langKey][currentStep];
@@ -1657,7 +1657,7 @@ function getWorkflowDetails() {
         `,
       },
     },
-    "zh-TW": {
+    "zh-CN": {
       1: {
         title: "任務規劃",
         content: `

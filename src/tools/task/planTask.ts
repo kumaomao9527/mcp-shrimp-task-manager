@@ -1,61 +1,43 @@
 import { z } from "zod";
-import path from "path";
-import { fileURLToPath } from "url";
 import { getAllTasks } from "../../models/taskModel.js";
 import { TaskStatus, Task } from "../../types/index.js";
 import { getPlanTaskPrompt } from "../../prompts/index.js";
+import { ensureMemoryDir } from "../../utils/pathUtils.js";
 
-// 開始規劃工具
+// 开始规划工具
 export const planTaskSchema = z.object({
   description: z
     .string()
     .min(10, {
-      message: "任務描述不能少於10個字符，請提供更詳細的描述以確保任務目標明確",
+      message: "任务描述不能少于10个字符，请提供更详细的描述以确保任务目标明确",
     })
-    .describe("完整詳細的任務問題描述，應包含任務目標、背景及預期成果"),
-  requirements: z
-    .string()
-    .optional()
-    .describe("任務的特定技術要求、業務約束條件或品質標準（選填）"),
-  existingTasksReference: z
-    .boolean()
-    .optional()
-    .default(false)
-    .describe("是否參考現有任務作為規劃基礎，用於任務調整和延續性規劃"),
+    .describe("完整详细的任务问题描述，应包含任务目标、背景及预期成果"),
+  requirements: z.string().optional().describe("任务的特定技术要求、业务约束条件或质量标准（选填）"),
+  existingTasksReference: z.boolean().optional().default(false).describe("是否参考现有任务作为规划基础，用于任务调整和延续性规划"),
+  dataDir: z.string().describe("数据目录路径，用于存储任务数据的工作目录"),
+  requirementName: z.string().describe("需求名称，指定要操作的需求目录，必须提供"),
 });
 
-export async function planTask({
-  description,
-  requirements,
-  existingTasksReference = false,
-}: z.infer<typeof planTaskSchema>) {
-  // 獲取基礎目錄路徑
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = path.dirname(__filename);
-  const PROJECT_ROOT = path.resolve(__dirname, "../../..");
-  const DATA_DIR = process.env.DATA_DIR || path.join(PROJECT_ROOT, "data");
-  const MEMORY_DIR = path.join(DATA_DIR, "memory");
+export async function planTask({ description, requirements, existingTasksReference = false, dataDir, requirementName }: z.infer<typeof planTaskSchema>) {
+  // 确保记忆目录存在
+  const MEMORY_DIR = await ensureMemoryDir(dataDir);
 
-  // 準備所需參數
+  // 准备所需参数
   let completedTasks: Task[] = [];
   let pendingTasks: Task[] = [];
 
-  // 當 existingTasksReference 為 true 時，從數據庫中載入所有任務作為參考
+  // 当 existingTasksReference 为 true 时，从数据库中加载所有任务作为参考
   if (existingTasksReference) {
     try {
-      const allTasks = await getAllTasks();
+      const allTasks = await getAllTasks(dataDir, requirementName);
 
-      // 將任務分為已完成和未完成兩類
-      completedTasks = allTasks.filter(
-        (task) => task.status === TaskStatus.COMPLETED
-      );
-      pendingTasks = allTasks.filter(
-        (task) => task.status !== TaskStatus.COMPLETED
-      );
+      // 将任务分为已完成和未完成两类
+      completedTasks = allTasks.filter((task) => task.status === TaskStatus.COMPLETED);
+      pendingTasks = allTasks.filter((task) => task.status !== TaskStatus.COMPLETED);
     } catch (error) {}
   }
 
-  // 使用prompt生成器獲取最終prompt
+  // 使用prompt生成器获取最终prompt
   const prompt = getPlanTaskPrompt({
     description,
     requirements,

@@ -14,11 +14,11 @@ startCommand:
     description: Configuration for shrimp task manager. dataDir must be an absolute path.
   commandFunction:
     # A JS function that produces the CLI command based on the given config to start the MCP on stdio.
+    # 注意：不再设置 DATA_DIR 环境变量，所有工具都必须通过 dataDir 参数传入数据目录
     |-
     (config) => ({
         command: 'node',
-        args: ['/mcp-shrimp-task-manager/dist/index.js'],
-        env: { DATA_DIR: config.dataDir }
+        args: ['/mcp-shrimp-task-manager/dist/index.js']
     })
   exampleConfig:
     dataDir: /var/lib/mcp-shrimp-task-manager/data
